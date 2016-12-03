@@ -37,6 +37,7 @@ def find_resolution():
 def download_new_images():
     if(internet_on()):
         print("Downloading latest flickr images based  on keyword")
+        # wget the enclosed jpg
     else:
         print("Using local downloads")
 
