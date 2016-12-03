@@ -7,6 +7,8 @@ RES_Y = 768
 #IMG_DUR = 1200
 #SEED_IMAGES = 5
 
+import subprocess
+import PIL
 from PIL import Image
 from sys import stdout
 from sys import exit
@@ -25,11 +27,7 @@ def internet_on():
 def find_resolution():
     res_x = 0
     res_y = 0
-
-    p1 = subprocess.Popen(["xrandr"], stdout=subprocess.PIPE)
-    p2 = subprocess.Popen(["grep", regex_search], stdin=p1.stdout, stdout=subprocess.PIPE)
-    p1.stdout.close()
-    output = p2.communicate()[0]
+    res = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
 
 def download_new_images():
     if(internet_on()):
@@ -38,7 +36,10 @@ def download_new_images():
         print("Using local downloads")
 
 def change_bg():
+    res_x = RES_X
+    res_y = RES_Y
     print("Change Background image")
+    return int(res_x), int(res_y)
 
 if __name__ == '__main__':
     #schedule daily data download
