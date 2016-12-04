@@ -28,7 +28,12 @@ def internet_on():
 def find_resolution():
     res_x = 0
     res_y = 0
-    res = subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0]
+    res = str(subprocess.Popen('xrandr | grep "\*" | cut -d" " -f4',shell=True, stdout=subprocess.PIPE).communicate()[0])
+    res_x,res_y = res.split('x')
+    res_y = int(res_y[:-3])
+    res_x = int(res_x[2:])
+
+    print("X: %s Y: %s" % (res_x, res_y) )
 
 def download_new_images():
     if(internet_on()):
@@ -38,16 +43,16 @@ def download_new_images():
         for item in r.json()["items"]:
             img = item["media"]["m"][:-6] + "_b.jpg"
             print(img)
+        # wget the enclosed jpg
     else:
         print("Using local downloads")
 
 def change_bg():
-    res_x = RES_X
-    res_y = RES_Y
     print("Change Background image")
-    return int(res_x), int(res_y)
+    return
 
 if __name__ == '__main__':
+    find_resolution()
     #schedule daily data download
     download_new_images()
     #schedule timely bg change
