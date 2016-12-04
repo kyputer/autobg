@@ -6,6 +6,7 @@ RES_X = 1024
 RES_Y = 768
 #IMG_DUR = 1200
 #SEED_IMAGES = 5
+KEYWORDS = "nature"
 
 import subprocess
 import PIL
@@ -32,6 +33,11 @@ def find_resolution():
 def download_new_images():
     if(internet_on()):
         print("Downloading latest flickr images based  on keyword")
+        url = "https://api.flickr.com/services/feeds/photos_public.gne?tags=" + KEYWORDS+"&tagmode=ANY&format=json&nojsoncallback=?"
+        r = requests.get(url)
+        for item in r.json()["items"]:
+            img = item["media"]["m"][:-6] + "_b.jpg"
+            print(img)
     else:
         print("Using local downloads")
 
