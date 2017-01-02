@@ -64,9 +64,9 @@ def download_new_image():
         img = item["media"]["m"][:-6] + "_b.jpg"
         #TODO urllib (where is it downloading the temp file?. Needs "dir+filename"
         configs = {}
-        configs["updated_at"] = str_time = time.strftime("%m.%d.%y %H:%M", time.localtime())
+        configs["updated_at"] = str_time = time.strftime("%m.%d.%y-%H:%M", time.localtime())
         configs["filename"] = filename = '%s.jpg' % str_time
-        urllib.request.urlretrieve(str(img), filename)
+        urllib.request.urlretrieve(str(img), os.path.join(TMP_PATH, filename))
         CONFIGS = configs
         set_configs(configs)
     else:
@@ -75,14 +75,17 @@ def download_new_image():
 def change_bg():
     """ Change background"""
     global CONFIGS
-    filepath = os.path.join(TMP_PATH, CONFIGS["filename"])
-    subprocess.call(["feh", CONFIGS["filename"], "--bg-fill", TMP_PATH])
-    print("Change Background image")
+    if CONFIGS and CONFIGS["filename"]:
+        handle_bg_change(CONFIGS["filename"], TMP_PATH)
+        print("Change Background image")
     sys.exit()
+
+def handle_bg_change(filename, filepath):
+    subprocess.call(["feh", os.path.join(filepath, filename), "--bg-fill"])
 
 def a_dayold(s_time):
     """ Check if time is a day hold"""
-    tm = time.strptime(s_time, "%m.%d.%y %H:%M")
+    tm = time.strptime(s_time, "%m.%d.%y-%H:%M")
     if (time.mktime(time.localtime()) - time.mktime(tm)) >= 86400000:
         return True
     return False
@@ -97,7 +100,8 @@ def change_bg_if_old():
 
 if __name__ == '__main__':
     global CONFIGS, KEYWORD
-    TMP_PATH = os.path.dirname(os.path.realpath(__file__))
+    TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")
+    print(TMP_PATH)
     CONFIGS = load_configs()
     args = parser.parse_args()
     KEYWORD = args.keyword or "nature"
