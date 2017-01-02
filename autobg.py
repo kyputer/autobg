@@ -12,8 +12,6 @@ import subprocess
 import urllib.request
 import os
 import sys
-from sys import exit, stdout
-from datetime import datetime, timedelta
 import time
 import requests
 import random
@@ -45,7 +43,7 @@ def set_configs(configs):
 def internet_on():
     """ Check if connected to Internet """
     try:
-        requests.get('https://google.com', timeout=1)
+        requests.get('https://google.com', timeout=4)
         return True
     except requests.ConnectionError:
         return False
@@ -81,7 +79,9 @@ def change_bg():
     sys.exit()
 
 def handle_bg_change(filename, filepath):
-    subprocess.call(["feh", os.path.join(filepath, filename), "--bg-fill"])
+    #subprocess.call(["feh", os.path.join(filepath, filename), "--bg-fill"])
+    subprocess.call(["gsettings", "set", "org.gnome.desktop.background",
+                    "picture-uri", "file://" + os.path.join(filepath, filename)])
 
 def a_dayold(s_time):
     """ Check if time is a day hold"""
@@ -101,7 +101,7 @@ def change_bg_if_old():
 if __name__ == '__main__':
     global CONFIGS, KEYWORD
     TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")
-    print(TMP_PATH)
+    #print(TMP_PATH)
     CONFIGS = load_configs()
     args = parser.parse_args()
     KEYWORD = args.keyword or "nature"
