@@ -76,7 +76,7 @@ def change_bg():
     """ Change background"""
     global CONFIGS
     filepath = os.path.join(TMP_PATH, CONFIGS["filename"])
-    subprocess.call(["feh", "", "--bg-fill", TMP_PATH])
+    subprocess.call(["feh", filename, "--bg-fill", TMP_PATH])
     print("Change Background image")
     sys.exit()
 
