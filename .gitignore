@@ -88,5 +88,6 @@ ENV/
 # Rope project settings
 .ropeproject
 
-# autobg config
-/.autobg
+# autobg settings
+.autobg
+tmp/*
