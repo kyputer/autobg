@@ -11,19 +11,18 @@ import argparse
 import subprocess
 import urllib.request
 import os
-import sys
 import time
 import requests
 import random
 import json
-#import PIL
-#from PIL import Image
-#import schedule
+from crontab import CronTab
 
 parser = argparse.ArgumentParser(description='New daily backgrounds from flickr.')
 parser.add_argument('-k', '--keyword', help='Set keyword')
 parser.add_argument('-d', '--download-bg', help='Download new image from flickr', action="store_true")
 parser.add_argument('-c','--change-bg', help='Change Background to Downloaded Image', action="store_true")
+parser.add_argument('-s','--stop-job', help='Stop periodicaly downloading new images', action="store_true")
+parser.add_argument('-i','--interval', type=int, help='Interval for change, in minutes')
 parser.add_argument('-m','--window-manager', help='Use feh for window managers', action="store_true")
 
 def load_configs():
@@ -53,8 +52,9 @@ def download_new_image():
     """ Download a new image from flickr """
     global CONFIGS, KEYWORD
     if(internet_on()):
+        old_filename  = None
         if CONFIGS and CONFIGS["filename"]:
-            os.remove(os.path.join(TMP_PATH, CONFIGS["filename"]))
+            old_filename = CONFIGS["filename"]
 
         print("Downloading latest flickr images based  on keyword")
         url = "https://api.flickr.com/services/feeds/photos_public.gne?tags=" + KEYWORD+"&tagmode=ANY&format=json&nojsoncallback=?"
@@ -68,6 +68,8 @@ def download_new_image():
         urllib.request.urlretrieve(str(img), os.path.join(TMP_PATH, filename))
         CONFIGS = configs
         set_configs(configs)
+        if old_filename and old_filename != CONFIGS["filename"]:
+            os.remove(os.path.join(TMP_PATH, old_filename))
     else:
         print("Unable to download new image")
 
@@ -77,37 +79,59 @@ def change_bg():
     if CONFIGS and CONFIGS["filename"]:
         handle_bg_change(CONFIGS["filename"], TMP_PATH)
         print("Change Background image")
-    sys.exit()
 
 def handle_bg_change(filename, filepath):
+    """ Change the background based user's os and desktop env"""
     global WIN_MANAGER
     if(WIN_MANAGER):
         subprocess.call(["feh", os.path.join(filepath, filename), "--bg-fill"])
     else:
         subprocess.call(["gsettings", "set", "org.gnome.desktop.background","picture-uri", "file://" + os.path.join(filepath, filename)])
 
-def a_dayold(s_time):
+def a_interval_old(s_time):
     """ Check if time is a day hold"""
+    global INTERVAL
     tm = time.strptime(s_time, "%m.%d.%y-%H:%M")
-    if (time.mktime(time.localtime()) - time.mktime(tm)) >= 86400000:
+    if (time.mktime(time.localtime()) - time.mktime(tm)) >= (INTERVAL * 60):
         return True
     return False
 
 def change_bg_if_old():
     """ Change background on first run or after a day """
     global CONFIGS
-    if not(CONFIGS) or a_dayold(CONFIGS["updated_at"]):
+    if not(CONFIGS) or a_interval_old(CONFIGS["updated_at"]):
         download_new_image()
         change_bg()
-    #schedule_next run for when a day old
+
+def schedule_next_download(disable=False):
+    global CONFIGS, KEYWORD,INTERVAL
+    configs = CONFIGS
+    cron = CronTab(user=True)
+    job_id = "ID::AUTOBG-CHANGEBG"
+    cron.remove_all(comment=job_id)
+    if not disable:
+        job_cmd = "%s -k %s -i %i" % (os.path.realpath(__file__), KEYWORD, INTERVAL)
+        job = cron.new(command=job_cmd)
+        job.set_comment(job_id)
+        configs['job_id'] = job.comment
+        day = (INTERVAL%10080)//1440
+        hour = ((INTERVAL%10080)%1440)//60
+        minute = ((INTERVAL%10080)%1440)%60
+        job.day.every(1 or day)
+        job.hour.every(1 or hour)
+        job.minute.every(1 or minute)
+        job.enable()
+        set_configs(configs)
+    cron.write()
 
 if __name__ == '__main__':
-    global CONFIGS, KEYWORD, WIN_MANAGER
+    global CONFIGS, KEYWORD, WIN_MANAGER, INTERVAL
     TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")
     #print(TMP_PATH)
     CONFIGS = load_configs()
     args = parser.parse_args()
     KEYWORD = args.keyword or "nature"
+    INTERVAL = args.interval or 1440
     WIN_MANAGER = args.window_manager
     if not(args.download_bg or args.change_bg):
         change_bg_if_old()
@@ -117,3 +141,4 @@ if __name__ == '__main__':
             change_bg()
         if args.change_bg:
             change_bg()
+    schedule_next_download(args.stop_job)
