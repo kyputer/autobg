@@ -24,6 +24,7 @@ parser = argparse.ArgumentParser(description='New daily backgrounds from flickr.
 parser.add_argument('-k', '--keyword', help='Set keyword')
 parser.add_argument('-d', '--download-bg', help='Download new image from flickr', action="store_true")
 parser.add_argument('-c','--change-bg', help='Change Background to Downloaded Image', action="store_true")
+parser.add_argument('-m','--window-manager', help='Use feh for window managers', action="store_true")
 
 def load_configs():
     """ Retrieve configs from .autobg file """
@@ -79,9 +80,10 @@ def change_bg():
     sys.exit()
 
 def handle_bg_change(filename, filepath):
-    #subprocess.call(["feh", os.path.join(filepath, filename), "--bg-fill"])
-    subprocess.call(["gsettings", "set", "org.gnome.desktop.background",
-                    "picture-uri", "file://" + os.path.join(filepath, filename)])
+    if(wm):
+        subprocess.call(["feh", os.path.join(filepath, filename), "--bg-fill"])
+    else:
+        subprocess.call(["gsettings", "set", "org.gnome.desktop.background","picture-uri", "file://" + os.path.join(filepath, filename)])
 
 def a_dayold(s_time):
     """ Check if time is a day hold"""
@@ -105,6 +107,7 @@ if __name__ == '__main__':
     CONFIGS = load_configs()
     args = parser.parse_args()
     KEYWORD = args.keyword or "nature"
+    wm = args.window_manager
     if not(args.download_bg or args.change_bg):
         change_bg_if_old()
     else:
