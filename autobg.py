@@ -1,36 +1,48 @@
 #!/usr/bin/python
 
-DOWNLOAD_PATH = '~/Pictures/nasa/'
+TMP_PATH = None
 RES_TYPE = 'stretch'
 RES_X = 1024
 RES_Y = 768
+KEYWORD = "nature"
+CONFIGS = {}
 #IMG_DUR = 1200
 #SEED_IMAGES = 5
-KEYWORDS = "nature"
 
+import argparse
 import subprocess
 import urllib.request
-import PIL
 import os
 import sys
-from PIL import Image
 from sys import exit, stdout
 from datetime import datetime, timedelta
-import schedule 
 import time
 import requests
+#import PIL
+#from PIL import Image
+#import schedule
+
+parser = argparse.ArgumentParser(description='New daily backgrounds from flickr.')
+parser.add_argument('-k', '--keyword', help='Set keyword')
+parser.add_argument('-d', '--download-bg', help='Download new image from flickr', action="store_true")
+parser.add_argument('-c','--change-bg', help='Change Background to Downloaded Image', action="store_true")
+
+def load_configs():
+    pass
 
 def internet_on():
+    """ Check if connected to Internet """
     try:
         requests.get('https://google.com', timeout=1)
         return True
     except requests.ConnectionError:
         return False
 
-def download_new_images():
+def download_new_image():
+    """ Download a new image from flickr """
     if(internet_on()):
         print("Downloading latest flickr images based  on keyword")
-        url = "https://api.flickr.com/services/feeds/photos_public.gne?tags=" + KEYWORDS+"&tagmode=ANY&format=json&nojsoncallback=?"
+        url = "https://api.flickr.com/services/feeds/photos_public.gne?tags=" + KEYWORD+"&tagmode=ANY&format=json&nojsoncallback=?"
         r = requests.get(url)
         for item in r.json()["items"]:
             img = item["media"]["m"][:-6] + "_b.jpg"
@@ -42,18 +54,25 @@ def download_new_images():
         print("Using local downloads")
 
 def change_bg():
-    realpath = os.path.dirname(os.path.realpath(__file__))
-    subprocess.call(["feh", "--randomize", "--bg-fill", realpath])
-    print("Change Background image") 
+    """ Change background"""
+    subprocess.call(["feh", "--randomize", "--bg-fill", TMP_PATH])
+    print("Change Background image")
     sys.exit()
-    return
+
+def change_bg_if_old():
+    pass
 
 if __name__ == '__main__':
-    #find_resolution()
-    #schedule daily data download
-    download_new_images()
-    #schedule timely bg change
-    change_bg()
-    while True:
-        schedule.run_pending();
-        time.sleep(1)
+    TMP_PATH = os.path.dirname(os.path.realpath(__file__))
+    CONFIGS = load_configs()
+    args = parser.parse_args()
+    if args.keyword:
+        KEYWORD = args.keyword
+    if not(args.download_bg or args.change_bg):
+        change_bg_if_old()
+    else:
+        if args.download-bg:
+            download_new_image()
+            change_bg()
+        if args.change-bg:
+            change_bg()
