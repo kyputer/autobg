@@ -80,7 +80,8 @@ def change_bg():
     sys.exit()
 
 def handle_bg_change(filename, filepath):
-    if(wm):
+    global WIN_MANAGER
+    if(WIN_MANAGER):
         subprocess.call(["feh", os.path.join(filepath, filename), "--bg-fill"])
     else:
         subprocess.call(["gsettings", "set", "org.gnome.desktop.background","picture-uri", "file://" + os.path.join(filepath, filename)])
@@ -101,13 +102,13 @@ def change_bg_if_old():
     #schedule_next run for when a day old
 
 if __name__ == '__main__':
-    global CONFIGS, KEYWORD
+    global CONFIGS, KEYWORD, WIN_MANAGER
     TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")
     #print(TMP_PATH)
     CONFIGS = load_configs()
     args = parser.parse_args()
     KEYWORD = args.keyword or "nature"
-    wm = args.window_manager
+    WIN_MANAGER = args.window_manager
     if not(args.download_bg or args.change_bg):
         change_bg_if_old()
     else:
