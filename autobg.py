@@ -127,11 +127,12 @@ def schedule_next_download(disable=False):
 if __name__ == '__main__':
     global CONFIGS, KEYWORD, WIN_MANAGER, INTERVAL
     TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")
-    #print(TMP_PATH)
     CONFIGS = load_configs()
     args = parser.parse_args()
-    KEYWORD = args.keyword or "nature"
-    INTERVAL = args.interval or 1440
+    CONFIGS['keyword'] = KEYWORD = CONFIGS['keyword'] if not(args.keyword)\
+            and 'keyword' in CONFIGS.keys() else (args.keyword or "nature")
+    CONFIGS['interval'] = INTERVAL =  CONFIGS['interval'] if not(args.interval)\
+            and 'interval' in CONFIGS.keys() else (args.interval or 1440)
     WIN_MANAGER = args.window_manager
     if not(args.download_bg or args.change_bg):
         change_bg_if_old()

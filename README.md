@@ -11,8 +11,6 @@ By default it is scheduled to change daily.
 
 ### Schedule background change
 To schedule background autobg to run a different intervals, pass the interval using the -i flag.
-<br><i>Note: To keep interval when other flags are used, also pass the interval flag with the intended interval.</i>
-
 ```
 ./autobg.py -i <Interval in Minutes e.i 2 >
 ```
