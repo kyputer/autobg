@@ -1,6 +1,8 @@
 #!/usr/bin/python
+from __future__ import print_function
 
 TMP_PATH = None
+TABFILE = "autobg.tab"
 RES_TYPE = 'stretch'
 RES_X = 1024
 RES_Y = 768
@@ -9,12 +11,13 @@ RES_Y = 768
 
 import argparse
 import subprocess
-import urllib.request
 import os
 import time
 import requests
 import random
 import json
+from datetime import datetime
+#from croniter import croniter # using this daemon to make it system independent
 from crontab import CronTab
 
 parser = argparse.ArgumentParser(description='New daily backgrounds from flickr.')
@@ -53,7 +56,7 @@ def download_new_image():
     global CONFIGS, KEYWORD
     if(internet_on()):
         old_filename  = None
-        if CONFIGS and CONFIGS["filename"]:
+        if CONFIGS and ("filename" in CONFIGS.keys() and CONFIGS["filename"]):
             old_filename = CONFIGS["filename"]
 
         print("Downloading latest flickr images based  on keyword")
@@ -65,7 +68,9 @@ def download_new_image():
         configs = {}
         configs["updated_at"] = str_time = time.strftime("%m.%d.%y-%H:%M", time.localtime())
         configs["filename"] = filename = '%s.jpg' % str_time
-        urllib.request.urlretrieve(str(img), os.path.join(TMP_PATH, filename))
+        r_img = requests.get(str(img))
+        with open(os.path.join(TMP_PATH, filename),'wb') as f:
+          f.write(r_img.content)
         CONFIGS = configs
         set_configs(configs)
         if old_filename and old_filename != CONFIGS["filename"]:
@@ -99,18 +104,27 @@ def a_interval_old(s_time):
 def change_bg_if_old():
     """ Change background on first run or after a day """
     global CONFIGS
-    if not(CONFIGS) or a_interval_old(CONFIGS["updated_at"]):
+    print(CONFIGS)
+    if not(CONFIGS) or ( "updated_at" in CONFIGS.keys() and a_interval_old(CONFIGS["updated_at"])):
         download_new_image()
         change_bg()
 
+def checkTabfile():
+    global TABFILE
+    if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), TABFILE)):
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), TABFILE),'w') as f:
+            f.write("# Initialized Tab File\n")
+
 def schedule_next_download(disable=False):
-    global CONFIGS, KEYWORD,INTERVAL
+    global CONFIGS, KEYWORD,INTERVAL, TABFILE
     configs = CONFIGS
+    #checkTabfile()
+    #cron = CronTab(tabfile=os.path.join(os.path.dirname(os.path.realpath(__file__)), TABFILE))
     cron = CronTab(user=True)
     job_id = "ID::AUTOBG-CHANGEBG"
     cron.remove_all(comment=job_id)
     if not disable:
-        job_cmd = "%s -k %s -i %i" % (os.path.realpath(__file__), KEYWORD, INTERVAL)
+        job_cmd = "python %s -k %s -i %i" % (os.path.realpath(__file__), KEYWORD, INTERVAL)
         job = cron.new(command=job_cmd)
         job.set_comment(job_id)
         configs['job_id'] = job.comment
@@ -120,7 +134,7 @@ def schedule_next_download(disable=False):
         job.day.every(1 or day)
         job.hour.every(1 or hour)
         job.minute.every(1 or minute)
-        job.enable()
+        job.enable() #schedule(date_from=datetime.now())
         set_configs(configs)
     cron.write()
 
@@ -143,3 +157,6 @@ if __name__ == '__main__':
         if args.change_bg:
             change_bg()
     schedule_next_download(args.stop_job)
+    #tab = CronTab(tabfile=os.path.join(os.path.dirname(os.path.realpath(__file__)), TABFILE))
+    #for result in tab.run_scheduler():
+    #    print("Schedule task")

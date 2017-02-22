@@ -91,3 +91,6 @@ ENV/
 # autobg settings
 .autobg
 tmp/*
+
+# Cron tabs
+*.tab
