@@ -20,6 +20,10 @@ To schedule background autobg to run a different intervals, pass the interval us
 ./autobg.py -d
 ```
 
+### Window manager example
+```
+./autobg.py -d -m -k nature
+```
 
 ### Help
 ```
