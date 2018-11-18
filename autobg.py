@@ -16,9 +16,6 @@ import time
 import requests
 import random
 import json
-from datetime import datetime
-#from croniter import croniter # using this daemon to make it system independent
-from crontab import CronTab
 
 parser = argparse.ArgumentParser(description='New daily backgrounds from flickr.')
 parser.add_argument('-k', '--keyword', help='Set keyword')
@@ -93,51 +90,6 @@ def handle_bg_change(filename, filepath):
     else:
         subprocess.call(["gsettings", "set", "org.gnome.desktop.background","picture-uri", "file://" + os.path.join(filepath, filename)])
 
-def a_interval_old(s_time):
-    """ Check if time is a day hold"""
-    global INTERVAL
-    tm = time.strptime(s_time, "%m.%d.%y-%H:%M")
-    if (time.mktime(time.localtime()) - time.mktime(tm)) >= (INTERVAL * 60):
-        return True
-    return False
-
-def change_bg_if_old():
-    """ Change background on first run or after a day """
-    global CONFIGS
-    print(CONFIGS)
-    if not(CONFIGS) or ( "updated_at" in CONFIGS.keys() and a_interval_old(CONFIGS["updated_at"])):
-        download_new_image()
-        change_bg()
-
-def checkTabfile():
-    global TABFILE
-    if not os.path.exists(os.path.join(os.path.dirname(os.path.realpath(__file__)), TABFILE)):
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), TABFILE),'w') as f:
-            f.write("# Initialized Tab File\n")
-
-def schedule_next_download(disable=False):
-    global CONFIGS, KEYWORD,INTERVAL, TABFILE
-    configs = CONFIGS
-    #checkTabfile()
-    #cron = CronTab(tabfile=os.path.join(os.path.dirname(os.path.realpath(__file__)), TABFILE))
-    cron = CronTab(user=True)
-    job_id = "ID::AUTOBG-CHANGEBG"
-    cron.remove_all(comment=job_id)
-    if not disable:
-        job_cmd = "python %s -k %s -i %i" % (os.path.realpath(__file__), KEYWORD, INTERVAL)
-        job = cron.new(command=job_cmd)
-        job.set_comment(job_id)
-        configs['job_id'] = job.comment
-        day = (INTERVAL%10080)//1440
-        hour = ((INTERVAL%10080)%1440)//60
-        minute = ((INTERVAL%10080)%1440)%60
-        job.day.every(1 or day)
-        job.hour.every(1 or hour)
-        job.minute.every(1 or minute)
-        job.enable() #schedule(date_from=datetime.now())
-        set_configs(configs)
-    cron.write()
-
 if __name__ == '__main__':
     global CONFIGS, KEYWORD, WIN_MANAGER, INTERVAL
     TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")
@@ -148,15 +100,8 @@ if __name__ == '__main__':
     CONFIGS['interval'] = INTERVAL =  CONFIGS['interval'] if not(args.interval)\
             and 'interval' in CONFIGS.keys() else (args.interval or 1440)
     WIN_MANAGER = args.window_manager
-    if not(args.download_bg or args.change_bg):
-        change_bg_if_old()
-    else:
-        if args.download_bg:
-            download_new_image()
-            change_bg()
-        if args.change_bg:
-            change_bg()
-    schedule_next_download(args.stop_job)
-    #tab = CronTab(tabfile=os.path.join(os.path.dirname(os.path.realpath(__file__)), TABFILE))
-    #for result in tab.run_scheduler():
-    #    print("Schedule task")
+    if args.download_bg:
+        download_new_image()
+        change_bg()
+    if args.change_bg:
+        change_bg()
