@@ -61,7 +61,7 @@ def download_new_image():
             old_filename = CONFIGS["filename"]
 
         print("Downloading latest flickr images based  on keyword")
-        url = "https://api.flickr.com/services/feeds/photos_public.gne?tags=" + KEYWORD+"&tagmode=ANY&format=json&nojsoncallback=?"
+        url = "https://api.flickr.com/services/feeds/photos_public.gne?tags="+KEYWORD+"&tagmode=ANY&format=json&nojsoncallback=?"
         r = requests.get(url)
         item = r.json()["items"][random.randint(0, len(r.json()["items"]) -1)]
         img = item["media"]["m"][:-6] + "_b.jpg"
