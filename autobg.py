@@ -4,8 +4,8 @@ from __future__ import print_function
 TMP_PATH = None
 TABFILE = "autobg.tab"
 RES_TYPE = 'stretch'
-RES_X = 1024
-RES_Y = 768
+RES_X = 2560
+RES_Y = 1440
 #IMG_DUR = 1200
 #SEED_IMAGES = 5
 
@@ -17,6 +17,7 @@ import requests
 import random
 import json
 from datetime import datetime
+from collections.abc import MutableMapping
 #from croniter import croniter # using this daemon to make it system independent
 from crontab import CronTab
 
@@ -91,7 +92,7 @@ def handle_bg_change(filename, filepath):
     if(WIN_MANAGER):
         subprocess.call(["feh", os.path.join(filepath, filename), "--bg-fill"])
     else:
-        subprocess.call(["gsettings", "set", "org.gnome.desktop.background","picture-uri", "file://" + os.path.join(filepath, filename)])
+        subprocess.call(["gsettings", "set", "org.gnome.desktop.background","picture-uri-dark", "file://" + os.path.join(filepath, filename)])
 
 def a_interval_old(s_time):
     """ Check if time is a day hold"""
@@ -141,6 +142,7 @@ def schedule_next_download(disable=False):
 if __name__ == '__main__':
     global CONFIGS, KEYWORD, WIN_MANAGER, INTERVAL
     TMP_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), "tmp")
+    print(TMP_PATH)
     CONFIGS = load_configs()
     args = parser.parse_args()
     CONFIGS['keyword'] = KEYWORD = CONFIGS['keyword'] if not(args.keyword)\
